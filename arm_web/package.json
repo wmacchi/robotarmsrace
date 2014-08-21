@@ -1,0 +1,20 @@
+{
+  "name": "arm_web",
+  "version": "0.0.1",
+  "description": "Web interface of the RobotArm controller.",
+  "main": "arm_web.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "Json.RPC"
+  ],
+  "author": "Abamis",
+  "license": "BSD-2-Clause",
+  "dependencies": {
+    "jayson": "~1.1.1",
+    "express": "~4.8.4",
+    "body-parser": "~1.6.4",
+    "debug": "~1.0.4"
+  }
+}

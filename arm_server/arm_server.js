@@ -8,7 +8,9 @@ var i2cio = require('./i2cio.js');
 var robotarm = require('./robotarm.js');
 var jayson = require('jayson');
 
-var arm1 = new robotarm.RobotArm(0x21);
+var arm1 = new robotarm.RobotArm(0x20);
+var arm2 = new robotarm.RobotArm(0x21);
+var arm = arm1;
 
 // create a server
 var server = jayson.server();
@@ -27,7 +29,7 @@ function testKeypress() {
     keypress(process.stdin);
     process.stdin.setRawMode(true);
     process.stdin.on('keypress', function (ch, key) {
-        console.log('got "keypress"', key);
+        console.log('got "keypress"', key.name);
         if (key && key.ctrl && key.name == 'c') {
             process.stdin.pause();
         }
@@ -40,25 +42,25 @@ function setupKeys() {
     process.stdin.setRawMode(true);
     
     process.stdin.on('keypress', function (ch, key) {
-        console.log('got "keypress"', key);
+        console.log('got "keypress"', key.name);
         if (!key) return;
         
         if (key.ctrl && key.name == 'c') {
             arm1.reset();
+            arm2.reset();
 
             process.stdin.pause();
         }
 
 	if (key.name == 'escape') {
 	    arm1.reset();
-		
+            arm2.reset();
 	    process.exit();
 	}
         
         switch (key.name) {
-            /*
-            case '1': break; // Arm 1
-            case '2': break; // Arm 2
+            case '1': arm = arm1; break; // Arm 1
+            case '2': arm = arm2; break; // Arm 2
 
             case 'q': arm.m1.up(); break; // m1 U
             case 'a': arm.m1.down(); break; // m1 D
@@ -70,8 +72,8 @@ function setupKeys() {
             case 'f': arm.m4.down(); break; // m4 D
             case 'z': arm.m5.up(); break; // m5 U
             case 'x': arm.m5.down(); break; // m5 D
-            */
-            case 'space': arm1.stopMotors(); break;
+
+            case 'space': arm1.stopMotors(); arm2.stopMotors(); break;
             
         }
             
@@ -88,58 +90,33 @@ setup();
 //testKeypress();
 
 server.method('doAction', function (device, action, callback) {
-    callback(null, 'Message Received');
-
     var deviceTargets = device.split('.');
+
+    callback(null, '');
+    console.log("deviceTargets =", deviceTargets);
     if (deviceTargets[0].indexOf('arm') > -1) {
-        if (deviceTargets[0] == 'arm1') {
-            handleMotorMovement(arm1,deviceTargets[1],action)
+        if (deviceTargets[0] == 'arm1' || deviceTargets[0] == 'arm2') {
+            handleMotorMovement(deviceTargets[0], deviceTargets[1], action)
         }
     }
 
-    console.log('Target Device: ' + device);
-    console.log('Action: ' + action);
+    console.log('action: ' + device + ": " + action);
 });
 
-var handleMotorMovement = function (arm, motor, action) {
-
-    switch (motor) {
-        case 'm1':
-            switch (action) {
-                case '0': arm.m1.stop(); break;
-                case '1': arm.m1.up(); break;
-                case '2': arm.m1.down(); break;
-            }
-	    break;
-        case 'm2':
-            switch (action) {
-                case '0': arm.m2.stop(); break;
-                case '1': arm.m2.up(); break;
-                case '2': arm.m2.down(); break;
-            }
-	    break;
-        case 'm3':
-            switch (action) {
-                case '0': arm.m3.stop(); break;
-                case '1': arm.m3.up(); break;
-                case '2': arm.m3.down(); break;
-            }
-	    break;
-        case 'm4':
-            switch (action) {
-                case '0': arm.m4.stop(); break;
-                case '1': arm.m4.up(); break;
-                case '2': arm.m4.down(); break;
-            }
-	    break;
-        case 'm5':
-            switch (action) {
-                case '0': arm.m5.stop(); break;
-                case '1': arm.m5.up(); break;
-                case '2': arm.m5.down(); break;
-            }
+var handleMotorMovement = function (arm, motor, action)
+{
+    var actionFunc;
+    
+    switch (action) {
+        case '0': actionFunc = "stop()"; break;
+        case '1': actionFunc = "up()"; break;
+        case '2': actionFunc = "down()"; break;
+        default: return;
     }
-
+    
+    var todo = arm + "." + motor + "." + actionFunc;
+    console.log("eval = " + todo);
+    eval(todo);
 } 
 
 console.log('Waiting for keypress...');

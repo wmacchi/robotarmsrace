@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Robot Arm Controller</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width, user-scalable=no">
+<style>
+body { margin: 0px; padding: 0px; }
+</style>
+</head>
+<body>
+<script type="text/javascript" src="jquery.js"></script>
+<table><tr><td valign="top">
+<canvas id="canvas" width="688" height="427" style="border:solid black 1px;">Sorry, incompatible browser.</canvas>
+</td><td valign="top">
+<button onclick="clearLog()">Clear Log</button>&nbsp;&nbsp;&nbsp;<input id="touchLog" type="checkbox" /> Touch Log<br>
+<input id="motorLog" type="checkbox" /> Motor Log
+<pre id="log" style="border: 1px solid #ccc;"></pre>
+</td></tr></table>
+<script type="text/javascript">
+"use strict";
+var canvas;
+var backdrop = new Image();
+var armId = getIdFromUrl('/');
+var ongoingActions = new Object();
+
+var hotSpots = [];
+var hotSpotsActive = new Array();
+var hotSpotSource = { width:688, height:427 };
+var hotSpotRadius = Math.pow(35, 2); // pixel radius squared
+var hotSpotRatioX = 1.0;
+var hotSpotRatioY = 1.0;
+
+hotSpots.push({ x:125, y:70, id:"m4", value:1 });
+hotSpots.push({ x:125, y:168, id:"m4", value:2 });
+hotSpots.push({ x:344, y:70, id:"m3", value:1 });
+hotSpots.push({ x:344, y:168, id:"m3", value:2 });
+hotSpots.push({ x:566, y:70, id:"m2", value:1 });
+hotSpots.push({ x:566, y:168, id:"m2", value:2 });
+hotSpots.push({ x:75, y:322, id:"m5", value:1 });
+hotSpots.push({ x:180, y:322, id:"m5", value:2 });
+hotSpots.push({ x:520, y:322, id:"m1", value:2 });
+hotSpots.push({ x:625, y:322, id:"m1", value:1 });
+// stop all
+hotSpots.push({ x:344, y:322, id:"m1", value:0 });
+hotSpots.push({ x:344, y:322, id:"m2", value:0 });
+hotSpots.push({ x:344, y:322, id:"m3", value:0 });
+hotSpots.push({ x:344, y:322, id:"m4", value:0 });
+hotSpots.push({ x:344, y:322, id:"m5", value:0 });
+
+
+function startup() {
+  canvas = document.getElementsByTagName("canvas")[0];
+  canvas.addEventListener("touchstart", handleStart, false);
+  canvas.addEventListener("touchmove", handleMove, false);
+  canvas.addEventListener("touchend", handleEnd, false);
+  canvas.addEventListener("touchleave", handleEnd, false);
+  canvas.addEventListener("touchcancel", handleCancel, false);
+  clearCanvas();
+
+  hotSpotRatioX = canvas.width / hotSpotSource.width;
+  hotSpotRatioY = canvas.height / hotSpotSource.height;
+  log("initialized.");
+}
+
+function clearCanvas() {
+  canvas = document.getElementsByTagName("canvas")[0];
+  var ctx = canvas.getContext("2d");
+  ctx.drawImage(backdrop, 0, 0, canvas.width, canvas.height);
+}
+
+function clearLog() {
+  var p = document.getElementById('log');
+  p.innerHTML = "cleared.";
+}
+
+function sendAction(deviceId, actionId)
+{
+    var params = { 'device': deviceId, 'action': actionId };
+        log('yay1');
+    $.post('', { method:'doAction', params:params }, function(data) {
+        log('yay2');
+        //console.log(data);
+        if (document.getElementById('motorLog').checked)
+          log(deviceId + " - " + actionId);
+    }, "json");
+}
+
+function processTouches(evt)
+{
+  var touches = evt.touches;
+  var actions = new Object();
+
+  for (var i=0; i < touches.length; i++) {
+    hotSpots.forEach(function(h_el, h_idx, h_arr) {
+      var diffX = (h_el.x * hotSpotRatioX) - touches[i].pageX;
+      var diffY = (h_el.y * hotSpotRatioY) - touches[i].pageY;
+        
+      if ((Math.pow(diffX, 2) + Math.pow(diffY, 2)) < hotSpotRadius) {
+        actions[armId + "." + h_el.id] = h_el.value;
+        //log(armId + " - " + h_el.id + " - " + h_el.value);
+      }
+    });
+  }
+
+  // send stop for all actions not being triggered anymore
+  for (var key in ongoingActions) {
+    if (ongoingActions.hasOwnProperty(key)) {
+      if (!actions.hasOwnProperty(key)) {
+        delete ongoingActions[key];
+        sendAction(key, 0);
+      }
+    }
+  }
+
+  // add any actions that haven't been triggered or have changed
+  for (var key in actions) {
+    if (actions.hasOwnProperty(key)) {
+      if (!ongoingActions.hasOwnProperty(key) || ongoingActions[key] != actions[key]) {
+        ongoingActions[key] = actions[key];
+        sendAction(key, actions[key]);
+      }
+    }
+  }
+}
+
+function handleStart(evt) {
+  evt.preventDefault();
+  var touches = evt.changedTouches;
+  if (document.getElementById('touchLog').checked)
+    log(evt.type + " (" + touches.length + "/" + evt.touches.length + ")");
+  processTouches(evt);
+}
+
+function handleMove(evt) {
+  evt.preventDefault();
+  var touches = evt.changedTouches;
+  if (document.getElementById('touchLog').checked)
+    log(evt.type + " (" + touches.length + "/" + evt.touches.length + ")");
+  processTouches(evt);
+}
+
+function handleEnd(evt) {
+  evt.preventDefault();
+  var touches = evt.changedTouches;
+  if (document.getElementById('touchLog').checked)
+    log(evt.type + " (" + touches.length + "/" + evt.touches.length + ")");
+  processTouches(evt);
+}
+
+function handleCancel(evt) {
+  evt.preventDefault();
+  var touches = evt.changedTouches;
+  if (document.getElementById('touchLog').checked)
+    log(evt.type + " (" + touches.length + "/" + evt.touches.length + ")");
+  processTouches(evt);
+}
+
+function log(msg) {
+  var p = document.getElementById('log');
+  p.innerHTML = msg + "\n" + p.innerHTML;
+}
+
+function getIdFromUrl(id)
+{
+  // TODO: Pass ARM ID to page directly using a template
+  var pageURL = window.location.pathname;
+  return pageURL.substring(pageURL.lastIndexOf(id) + 1);
+}
+
+backdrop.src = "controller.png";
+backdrop.addEventListener('load', startup, false);
+</script>
+</body>
+</html>
