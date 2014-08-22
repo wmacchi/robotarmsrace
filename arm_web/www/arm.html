@@ -27,27 +27,21 @@ var ongoingActions = new Object();
 var hotSpots = [];
 var hotSpotsActive = new Array();
 var hotSpotSource = { width:688, height:427 };
-var hotSpotRadius = Math.pow(35, 2); // pixel radius squared
+var hotSpotRadiusActive = Math.pow(38, 2); // pixel radius squared
+var hotSpotRadiusInactive = Math.pow(32, 2); // pixel radius squared
 var hotSpotRatioX = 1.0;
 var hotSpotRatioY = 1.0;
 
-hotSpots.push({ x:125, y:70, id:"m4", value:1 });
-hotSpots.push({ x:125, y:168, id:"m4", value:2 });
-hotSpots.push({ x:344, y:70, id:"m3", value:1 });
-hotSpots.push({ x:344, y:168, id:"m3", value:2 });
-hotSpots.push({ x:566, y:70, id:"m2", value:1 });
-hotSpots.push({ x:566, y:168, id:"m2", value:2 });
-hotSpots.push({ x:75, y:322, id:"m5", value:1 });
-hotSpots.push({ x:180, y:322, id:"m5", value:2 });
-hotSpots.push({ x:520, y:322, id:"m1", value:2 });
-hotSpots.push({ x:625, y:322, id:"m1", value:1 });
-// stop all
-hotSpots.push({ x:344, y:322, id:"m1", value:0 });
-hotSpots.push({ x:344, y:322, id:"m2", value:0 });
-hotSpots.push({ x:344, y:322, id:"m3", value:0 });
-hotSpots.push({ x:344, y:322, id:"m4", value:0 });
-hotSpots.push({ x:344, y:322, id:"m5", value:0 });
-
+hotSpots.push({ x:125, y:70, id:armId+".m4", value:1, active:false });
+hotSpots.push({ x:125, y:168, id:armId+".m4", value:2, active:false });
+hotSpots.push({ x:344, y:70, id:armId+".m3", value:1, active:false });
+hotSpots.push({ x:344, y:168, id:armId+".m3", value:2, active:false });
+hotSpots.push({ x:566, y:70, id:armId+".m2", value:1, active:false });
+hotSpots.push({ x:566, y:168, id:armId+".m2", value:2, active:false });
+hotSpots.push({ x:75, y:322, id:armId+".m5", value:1, active:false });
+hotSpots.push({ x:180, y:322, id:armId+".m5", value:2, active:false });
+hotSpots.push({ x:520, y:322, id:armId+".m1", value:2, active:false });
+hotSpots.push({ x:625, y:322, id:armId+".m1", value:1, active:false });
 
 function startup() {
   canvas = document.getElementsByTagName("canvas")[0];
@@ -77,10 +71,8 @@ function clearLog() {
 function sendAction(deviceId, actionId)
 {
     var params = { 'device': deviceId, 'action': actionId };
-        log('yay1');
+
     $.post('', { method:'doAction', params:params }, function(data) {
-        log('yay2');
-        //console.log(data);
         if (document.getElementById('motorLog').checked)
           log(deviceId + " - " + actionId);
     }, "json");
@@ -95,31 +87,31 @@ function processTouches(evt)
     hotSpots.forEach(function(h_el, h_idx, h_arr) {
       var diffX = (h_el.x * hotSpotRatioX) - touches[i].pageX;
       var diffY = (h_el.y * hotSpotRatioY) - touches[i].pageY;
-        
+      var hotSpotRadius = (h_el.active? hotSpotRadiusActive : hotSpotRadiusInactive);
+
       if ((Math.pow(diffX, 2) + Math.pow(diffY, 2)) < hotSpotRadius) {
-        actions[armId + "." + h_el.id] = h_el.value;
-        //log(armId + " - " + h_el.id + " - " + h_el.value);
+        h_el.active = true;
+        actions[h_el.id] = h_el;
       }
     });
   }
 
   // send stop for all actions not being triggered anymore
   for (var key in ongoingActions) {
-    if (ongoingActions.hasOwnProperty(key)) {
-      if (!actions.hasOwnProperty(key)) {
-        delete ongoingActions[key];
-        sendAction(key, 0);
-      }
+    if (!ongoingActions.hasOwnProperty(key)) continue;
+    if (!actions.hasOwnProperty(key)) {
+      ongoingActions[key].active = false;
+      delete ongoingActions[key];
+      sendAction(key, 0);
     }
   }
 
   // add any actions that haven't been triggered or have changed
   for (var key in actions) {
-    if (actions.hasOwnProperty(key)) {
-      if (!ongoingActions.hasOwnProperty(key) || ongoingActions[key] != actions[key]) {
-        ongoingActions[key] = actions[key];
-        sendAction(key, actions[key]);
-      }
+    if (!actions.hasOwnProperty(key)) continue;
+    if (!ongoingActions.hasOwnProperty(key) || ongoingActions[key].value != actions[key].value) {
+      ongoingActions[key] = actions[key];
+      sendAction(key, actions[key].value);
     }
   }
 }

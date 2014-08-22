@@ -1,8 +1,15 @@
+/*
+ * test_armmotor.js
+ * Used for testing the reverse direction timeouts.
+ *
+ * See LICENSE for license information.
+ */
+
 var i2cio = require('./i2cio.js');
 var robotarm = require('./robotarm.js');
 
-var i2c_20_A = new i2cio(0x21, false);
-var i2c_20_B = new i2cio(0x21, true);
+var i2c_20_A = new i2cio(0x21, i2cio.GPIOPort.A);
+var i2c_20_B = new i2cio(0x21, i2cio.GPIOPort.B);
 i2c_20_A.reset();
 i2c_20_B.reset();
 

@@ -1,3 +1,14 @@
+/*
+ * arm_web.js
+ * Web interface for the RobotArm controller.
+ *
+ * Creates a json.rpc client and forwards web page action commands
+ * to a json.rpc server.
+ * A device is in the form 'arm1.m3', actions are integers.
+ *
+ * See LICENSE for license information.
+ */
+
 var express = require('express');
 var path = require('path');
 var jayson = require('jayson');
@@ -17,31 +28,29 @@ app.set('port', process.env.PORT || webPort);
 
 app.use(function(req, res, next) {
     //util.log(util.inspect(req, { showHidden: false, depth: 1, colors: true }));
-    console.log("request: " + req.originalUrl);
+    //console.log("request: " + req.originalUrl);
     next();
 });
 app.use(express.static(path.join(__dirname, 'www')));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded());
 
-function arm_page(req, res)
-{
+function arm_page(req, res) {
+    // page determines the arm id based on the URL, e.g. "/arm1" is arm 1.
     res.sendfile('./www/arm.html');
 }
 
-function arm_data(req, res)
-{
-    // POST
+function arm_data(req, res) {
+    // POST from clicking on the page controller hotspots
     if (req.body.method) {
         var device = req.body.params.device;
         var action = req.body.params.action;
-        console.log('doAction', [device,action]);
+
+        console.log('  action: ' + device + " - " + action);
         res.send("{}");
 
-        jsonClient.request('doAction', [device,action], function(err, error, response) 
-        {
-              if(err) throw err;
-              console.log(response);
+        jsonClient.request('doAction', [device, action], function(err, error, response) {
+            if(err) throw err;
         });
     } else {
         console.log('Error - arm data post: ', req.body);

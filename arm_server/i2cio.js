@@ -1,17 +1,27 @@
 /*
  * i2cio.js
+ * Simple wrapper for the i2cset command line.
+ *
+ * See LICENSE for license information.
  */
 
 var sys = require('sys')
-var exec = require('child_process').exec;
-//var exec = console.log // for debugging
+//var exec = require('child_process').exec;
+var exec = console.log // for debugging
 
 var exports = module.exports = i2cio;
 
+var GPIOPort = {
+    'A': 0, // Port A
+    'B': 1  // Port B
+}
+
+exports.GPIOPort = GPIOPort;
+
 /// E.g.: i2cio(0x20, true)
-function i2cio(address, useGpioB) {
+function i2cio(address, gpioPort) {
     this.address = address;
-    this.useGpioB = useGpioB;
+    this.useGpioB = (gpioPort === GPIOPort.B);
     this._olat = 0;
 }
 

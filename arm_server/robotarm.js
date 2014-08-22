@@ -1,11 +1,15 @@
 /*
- * ArmMotor.js
+ * robotarm.js
+ * RobotArm wrapper for motors and I2C commands.
+ *
+ * See LICENSE for license information.
  */
+
+var MOTOR_REVERSE_TIMEOUT = 250;
+
 var i2cio = require('./i2cio.js');
 
 var exports = module.exports;
-
-var MOTOR_REVERSE_TIMEOUT = 250;
 
 var ArmMotorSelect = {
     'M1': 0,  // Port A
@@ -42,13 +46,12 @@ ArmMotor.prototype._clearTimeout = function() {
     }
 }
 
-ArmMotor.prototype.move = function(action) {
+ArmMotor.prototype._move = function(action) {
     this._currentAction = action;
     this._i2c.set(action << (this._index*2), 0x03 << (this._index*2));
 }
 
 ArmMotor.prototype.up = function() {
-    //console.log('up: _currentAction =', this._currentAction);
     this._clearTimeout();
     if (this._currentAction == ArmMotorAction.UP)
         return;
@@ -58,12 +61,11 @@ ArmMotor.prototype.up = function() {
         this.stop();
         this._timeout = setTimeout(function() { me.up(); }, MOTOR_REVERSE_TIMEOUT);
     } else {
-        this.move(ArmMotorAction.UP);
+        this._move(ArmMotorAction.UP);
     }
 }
 
 ArmMotor.prototype.down = function() {
-    //console.log('down: _currentAction =', this._currentAction);
     this._clearTimeout();
     if (this._currentAction == ArmMotorAction.DOWN)
         return;
@@ -73,22 +75,30 @@ ArmMotor.prototype.down = function() {
         this.stop();
         this._timeout = setTimeout(function() { me.down(); }, MOTOR_REVERSE_TIMEOUT);
     } else {
-        this.move(ArmMotorAction.DOWN);
+        this._move(ArmMotorAction.DOWN);
     }
 }
 
 ArmMotor.prototype.stop = function() {
-    //console.log('stop: _currentAction =', this._currentAction);
     this._clearTimeout();
 
-    this.move(ArmMotorAction.STOP);
+    this._move(ArmMotorAction.STOP);
+}
+
+ArmMotor.prototype.move = function(action) {
+    switch (action) {
+        case ArmMotorAction.STOP: this.stop(); break;
+        case ArmMotorAction.UP: this.up(); break;
+        case ArmMotorAction.DOWN: this.down(); break;
+        default: break;
+    }
 }
 
 exports.RobotArm = RobotArm;
 
 function RobotArm(address) {
-    var i2c_A = new i2cio(address, false);
-    var i2c_B = new i2cio(address, true);
+    var i2c_A = new i2cio(address, i2cio.GPIOPort.A);
+    var i2c_B = new i2cio(address, i2cio.GPIOPort.B);
     this.setI2C(i2c_A, i2c_B);
 }
 
