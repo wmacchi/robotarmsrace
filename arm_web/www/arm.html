@@ -27,10 +27,11 @@ var ongoingActions = new Object();
 var hotSpots = [];
 var hotSpotsActive = new Array();
 var hotSpotSource = { width:688, height:427 };
-var hotSpotRadiusActive = Math.pow(38, 2); // pixel radius squared
-var hotSpotRadiusInactive = Math.pow(32, 2); // pixel radius squared
+var hotSpotRadiusActive = Math.pow(45, 2); // pixel radius squared
+var hotSpotRadiusInactive = Math.pow(40, 2); // pixel radius squared
 var hotSpotRatioX = 1.0;
 var hotSpotRatioY = 1.0;
+var ws;
 
 hotSpots.push({ x:125, y:70, id:armId+".m4", value:1, active:false });
 hotSpots.push({ x:125, y:168, id:armId+".m4", value:2, active:false });
@@ -41,7 +42,7 @@ hotSpots.push({ x:566, y:168, id:armId+".m2", value:2, active:false });
 hotSpots.push({ x:75, y:322, id:armId+".m5", value:1, active:false });
 hotSpots.push({ x:180, y:322, id:armId+".m5", value:2, active:false });
 hotSpots.push({ x:520, y:322, id:armId+".m1", value:2, active:false });
-hotSpots.push({ x:625, y:322, id:armId+".m1", value:1, active:false });
+hotSpots.push({ x:620, y:322, id:armId+".m1", value:1, active:false });
 
 function startup() {
   canvas = document.getElementsByTagName("canvas")[0];
@@ -54,6 +55,15 @@ function startup() {
 
   hotSpotRatioX = canvas.width / hotSpotSource.width;
   hotSpotRatioY = canvas.height / hotSpotSource.height;
+
+  ws = new WebSocket('ws://192.168.1.147:10000');
+  ws.onopen = function() {
+    console.log('ws opened');
+  }
+  ws.onmessage = function(msg) {
+    alert(msg.data);
+  }
+
   log("initialized.");
 }
 
@@ -70,12 +80,12 @@ function clearLog() {
 
 function sendAction(deviceId, actionId)
 {
-    var params = { 'device': deviceId, 'action': actionId };
+  var params = { 'device': deviceId, 'action': actionId };
 
-    $.post('', { method:'doAction', params:params }, function(data) {
-        if (document.getElementById('motorLog').checked)
-          log(deviceId + " - " + actionId);
-    }, "json");
+  if (document.getElementById('motorLog').checked)
+    log(deviceId + " - " + actionId);
+
+  ws.send(JSON.stringify(params));
 }
 
 function processTouches(evt)
@@ -162,6 +172,7 @@ function getIdFromUrl(id)
 
 backdrop.src = "controller.png";
 backdrop.addEventListener('load', startup, false);
+
 </script>
 </body>
 </html>
