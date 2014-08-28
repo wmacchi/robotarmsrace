@@ -32,19 +32,19 @@ function processKeys(ch, key) {
         return;
 
     switch (ch) {
-        case '1': arm = arm1; break; // Arm 1
-        case '2': arm = arm2; break; // Arm 2
+        case '1': arm = arm1; break;
+        case '2': arm = arm2; break;
 
-        case 'q': arm.m1.up(); break; // m1 U
-        case 'a': arm.m1.down(); break; // m1 D
-        case 'w': arm.m2.up(); break; // m2 U
-        case 's': arm.m2.down(); break; // m2 D
-        case 'e': arm.m3.up(); break; // m3 U
-        case 'd': arm.m3.down(); break; // m3 D
-        case 'r': arm.m4.up(); break; // m4 U
-        case 'f': arm.m4.down(); break; // m4 D
-        case 'z': arm.m5.up(); break; // m5 U
-        case 'x': arm.m5.down(); break; // m5 D
+        case 'q': arm.m1.up(); break;
+        case 'a': arm.m1.down(); break;
+        case 'w': arm.m2.up(); break;
+        case 's': arm.m2.down(); break;
+        case 'e': arm.m3.up(); break;
+        case 'd': arm.m3.down(); break;
+        case 'r': arm.m4.up(); break;
+        case 'f': arm.m4.down(); break;
+        case 'z': arm.m5.up(); break;
+        case 'x': arm.m5.down(); break;
         
         case ' ': arm.stopMotors(); break;
         default: break;
