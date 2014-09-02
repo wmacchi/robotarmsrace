@@ -8,23 +8,21 @@
  * See LICENSE for license information.
  */
 
+var webPort = 10000;
+var wwwPagesDir = './www';
+
 var express = require('express');
+var app = express();
 var path = require('path');
-var bodyParser = require('body-parser');
 var util = require('util');
-var wsio = require("websocket.io");
+var socketio = require("socket.io");
 
 var keypress = require('keypress');
-var robotarm = require('../arm_server/robotarm.js');
-
-var webPort = 10000;
+var robotarm = require('./robotarm/robotarm.js');
 
 var arm1 = new robotarm.RobotArm(0x20);
 var arm2 = new robotarm.RobotArm(0x21);
 var arm = 'arm1.';
-
-var app = express();
-var router = express.Router();
 
 var clients = {};
 var clientId = 0;
@@ -37,33 +35,12 @@ app.use(function(req, res, next) {
     //console.log("request: " + req.originalUrl);
     next();
 });
-app.use(express.static(path.join(__dirname, 'www')));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended: true}));
+
+app.use(express.static(path.join(__dirname, wwwPagesDir)));
 
 function arm_page(req, res) {
     // page determines the arm id based on the URL, e.g. "/arm1" is arm 1.
-    res.sendfile('./www/arm.html');
-}
-
-function arm_data(req, res) {
-    // POST from clicking on the page controller hotspots
-    if (req.body.method) {
-        var device = req.body.params.device;
-        var action = req.body.params.action;
-
-        res.send("{}");
-
-        if ((/^arm[12].m[1-5]$/).test(device) && action >= 0 && action <= 2) {
-            motorAction(device, action)
-        } else {
-            console.log("  invalid action: " + device + " - " + action);
-        }
-    } else {
-        console.log('Error - arm data post: ', req.body);
-    }
-    
-    res.end();
+    res.sendFile('arm.html', { root: wwwPagesDir });
 }
 
 function processKeys(ch, key) {
@@ -98,6 +75,8 @@ function processKeys(ch, key) {
         case 'f': motorAction(arm + 'm4', 2); break;
         case 'z': motorAction(arm + 'm5', 1); break;
         case 'x': motorAction(arm + 'm5', 2); break;
+        case 't': armAction(arm + 'led1', 1); break;
+        case 'g': armAction(arm + 'led1', 0); break;
 
         case 'n':
             sendMessageToAll("The game has finished");
@@ -121,6 +100,12 @@ function stopAllMotors() {
     arm2.reset();
 }
 
+function armAction(device, action) {
+    var cmd = device + ".set(" + action + ")";
+    util.log("  armAction: " + cmd);
+    eval(cmd);
+}
+
 function motorAction(device, action) {
     var cmd = device + ".move(" + action + ")";
     util.log("  motorAction: " + cmd);
@@ -129,45 +114,51 @@ function motorAction(device, action) {
 
 function sendMessageToAll(msg) {
     util.log("Sending message to " + Object.keys(clients).length + " clients: " + msg);
+    wsio.emit('message', msg);
+}
 
-    for (var key in clients) {
-        if (!clients.hasOwnProperty(key)) continue;
-
-        try {
-            clients[key].send(msg);
-        } catch (e) {
-            util.log("Error - client " + key + " send error");
-        }
+function printNetworkAddresses() {
+    var os = require('os');
+    var ifaces = os.networkInterfaces();
+    for (var dev in ifaces) {
+        var alias = 0;
+        ifaces[dev].forEach(function(details) {
+            if (details.family == 'IPv4') {
+                console.log("  " + dev + (alias?':'+alias:''), details.address);
+                ++alias;
+            }
+        });
     }
 }
 
-//router.get('/arm:id', arm_request);
-router.get('/arm1', arm_page);
-router.get('/arm2', arm_page);
-router.post('/arm1', arm_data);
-router.post('/arm2', arm_data);
-
-app.use(router);
+app.get('/arm1', arm_page);
+app.get('/arm2', arm_page);
 
 var server = app.listen(app.get('port'), function() {
-    console.log('Web server ready at: http://*:' + server.address().port);
+    console.log('Web server ready at port ' + server.address().port);
+    printNetworkAddresses();
 });
 
-var ws = wsio.attach(server);
+var wsio = socketio(server);
 
-ws.on('connection', function(client) {
+wsio.on('connection', function(client) {
     client.clientId = clientId++;
     clients[client.clientId] = client;
-    util.log('Web client connected: ' + client.clientId);
+    util.log("Web client " + client.clientId + " connected from "
+        + client.request.connection.remoteAddress);
 
-    client.on('message',  function(msg) {
+    client.on('action',  function(msg) {
         try {
             var req = JSON.parse(msg);
+            var device = req.device;
+            var action = req.action;
 
-            if ((/^arm[12].m[1-5]$/).test(req.device) && req.action >= 0 && req.action <= 2) {
-                motorAction(req.device, req.action)
+            if ((/^arm[12].m[1-5]$/).test(device) && action >= 0 && action <= 2) {
+                motorAction(device, action);
+            } else if ((/^arm[12].led[1]$/).test(device) && action >= 0 && action <= 1) {
+                armAction(device, action);
             } else {
-                console.log("  invalid action: " + req.device + " - " + req.action);
+                console.log("  invalid action: " + device + " - " + action);
             }
 
         } catch (e) {
@@ -175,8 +166,8 @@ ws.on('connection', function(client) {
         }
     });
 
-    client.on('close', function() {
-        util.log('Web client closed: ' + client.clientId);
+    client.on('disconnect', function() {
+        util.log("Web client " + client.clientId + " disconnected");
         delete clients[client.clientId];
     });
 });

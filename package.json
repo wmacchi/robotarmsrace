@@ -1,0 +1,24 @@
+{
+  "name": "robotarmsrace",
+  "version": "0.1.0",
+  "description": "Web interface for the RobotArm controller.",
+  "private": true,
+  "main": "arm_web_i2c.js",
+  "repository": { "type" : "git",
+    "url" : "http://github.com/wmacchi/robotarmsrace.git"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+  ],
+  "author": "Kevin Ambruster, Anthony Barresi, Brendan Gaylord-Miles, Warren Macchi",
+  "license": "MIT License",
+  "dependencies": {
+    "express": "~4.8.7",
+    "socket.io": "~1.0.6",
+    "keypress": "~0.2.1",
+    "i2c": "~0.1.4",
+    "jayson": "~1.1.1"
+  }
+}

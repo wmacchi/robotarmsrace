@@ -5,13 +5,14 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta name="viewport" content="width=device-width, user-scalable=no">
 <style>
-body { margin: 0px; padding: 0px; }
+body { width: 100%; height: 100%; margin: 0px; padding: 0px; }
 </style>
 </head>
 <body>
 <script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="/socket.io/socket.io.js"></script>
 <table><tr><td valign="top">
-<canvas id="canvas" width="688" height="427" style="border:solid black 1px;">Sorry, incompatible browser.</canvas>
+<canvas id="canvas" width="688" height="427">Sorry, incompatible browser.</canvas>
 </td><td valign="top">
 <button onclick="clearLog()">Clear Log</button>&nbsp;&nbsp;&nbsp;<input id="touchLog" type="checkbox" /> Touch Log<br>
 <input id="motorLog" type="checkbox" /> Motor Log
@@ -44,6 +45,9 @@ hotSpots.push({ x:180, y:322, id:armId+".m5", value:2, active:false });
 hotSpots.push({ x:520, y:322, id:armId+".m1", value:2, active:false });
 hotSpots.push({ x:620, y:322, id:armId+".m1", value:1, active:false });
 
+hotSpots.push({ x:348, y:322, id:armId+".led1", value:1, active:false });
+
+
 function startup() {
   canvas = document.getElementsByTagName("canvas")[0];
   canvas.addEventListener("touchstart", handleStart, false);
@@ -51,20 +55,26 @@ function startup() {
   canvas.addEventListener("touchend", handleEnd, false);
   canvas.addEventListener("touchleave", handleEnd, false);
   canvas.addEventListener("touchcancel", handleCancel, false);
+
+  resizeCanvas();
   clearCanvas();
 
   hotSpotRatioX = canvas.width / hotSpotSource.width;
   hotSpotRatioY = canvas.height / hotSpotSource.height;
 
-  ws = new WebSocket('ws://192.168.1.147:10000');
-  ws.onopen = function() {
-    console.log('ws opened');
-  }
-  ws.onmessage = function(msg) {
-    alert(msg.data);
-  }
+  ws = io.connect();
+  ws.on('message', function(msg) {
+    alert(msg);
+  });
 
   log("initialized.");
+}
+
+function resizeCanvas() {
+  canvas = document.getElementsByTagName("canvas")[0];
+  var ctx = canvas.getContext("2d");
+  ctx.canvas.width = window.innerWidth;
+  ctx.canvas.height = window.innerHeight;
 }
 
 function clearCanvas() {
@@ -85,7 +95,7 @@ function sendAction(deviceId, actionId)
   if (document.getElementById('motorLog').checked)
     log(deviceId + " - " + actionId);
 
-  ws.send(JSON.stringify(params));
+  ws.emit('action', JSON.stringify(params));
 }
 
 function processTouches(evt)

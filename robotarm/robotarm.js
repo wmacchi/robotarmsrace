@@ -11,23 +11,29 @@ var i2cio = require('./i2cio.js');
 
 var exports = module.exports;
 
+exports.Motor = ArmMotorSelect;
+
 var ArmMotorSelect = {
     'M1': 0,  // Port A
     'M2': 1,  // Port A
     'M3': 2,  // Port A
     'M4': 3,  // Port A
     'M5': 0,  // Port B
-};
+}
 
-exports.Motor = ArmMotorSelect;
+exports.MotorAction = ArmMotorAction;
 
 var ArmMotorAction = {
     'STOP': 0x00,
     'UP': 0x01,
     'DOWN': 0x02,
-};
+}
 
-exports.MotorAction = ArmMotorAction;
+exports.Led = ArmLedSelect;
+
+var ArmLedSelect = {
+    'LED1': 0
+}
 
 exports.ArmMotor = ArmMotor;
 
@@ -94,6 +100,18 @@ ArmMotor.prototype.move = function(action) {
     }
 }
 
+exports.ArmLed = ArmLed;
+
+function ArmLed(i2c, index) {
+    this._i2c = i2c;
+    this._index = index;
+}
+
+ArmLed.prototype.set = function(tf) {
+    var action = (tf? 0x04 : 0x00);
+    this._i2c.set(action, 0x0C);
+}
+
 exports.RobotArm = RobotArm;
 
 function RobotArm(address) {
@@ -114,6 +132,7 @@ RobotArm.prototype.setI2C = function(i2c_A, i2c_B) {
     this.m3 = new ArmMotor(this._i2c_A, ArmMotorSelect.M3);
     this.m4 = new ArmMotor(this._i2c_A, ArmMotorSelect.M4);
     this.m5 = new ArmMotor(this._i2c_B, ArmMotorSelect.M5);
+    this.led1 = new ArmLed(this._i2c_B, ArmLedSelect.LED1);
 }
 
 RobotArm.prototype.stopMotors = function() {
@@ -128,3 +147,5 @@ RobotArm.prototype.reset = function() {
     this._i2c_A.reset();
     this._i2c_B.reset();
 }
+
+
