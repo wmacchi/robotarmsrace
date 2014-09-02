@@ -109,7 +109,7 @@ function stopAllMotors() {
 
 function armAction(device, action) {
     var cmd = device + ".set(" + action + ")";
-    util.log("  armAction: " + cmd);
+    //util.log("  armAction: " + cmd);
     jsonClient.request('doAction', [device, action], function(err, error, response) {
         if (err) {
             console.log("Error - json client");
@@ -119,7 +119,7 @@ function armAction(device, action) {
 
 function motorAction(device, action) {
     var cmd = device + ".move(" + action + ")";
-    util.log("  motorAction: " + cmd);
+    //util.log("  motorAction: " + cmd);
     jsonClient.request('doAction', [device, action], function(err, error, response) {
         if (err) {
             console.log("Error - json client");

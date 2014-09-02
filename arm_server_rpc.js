@@ -77,13 +77,13 @@ function stopAllMotors() {
 
 function armAction(device, action) {
     var cmd = device + ".set(" + action + ")";
-    util.log("  armAction: " + cmd);
+    //util.log("  armAction: " + cmd);
     eval(cmd);
 }
 
 function motorAction(device, action) {
     var cmd = device + ".move(" + action + ")";
-    console.log("  motorAction: " + cmd);
+    //util.log("  motorAction: " + cmd);
     eval(cmd);
 } 
 
