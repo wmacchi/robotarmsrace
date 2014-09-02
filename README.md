@@ -3,4 +3,4 @@ robotarmsrace
 
 Robot Arms Race Project
 
-See http://www.makerfaireorlando.com/
+http://www.makerfaireorlando.com/maker-detail/?maker-id=125
