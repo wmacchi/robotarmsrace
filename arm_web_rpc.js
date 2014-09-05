@@ -186,6 +186,10 @@ wsio.on('connection', function(client) {
         }
     });
 
+    client.on('log', function(msg) {
+        console.log(msg);
+    });
+
     client.on('disconnect', function() {
         util.log("Web client " + client.clientId + " disconnected");
         delete clients[client.clientId];

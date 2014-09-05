@@ -3,7 +3,7 @@
 <head>
 <title>Robot Arm Controller</title>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<meta name="viewport" content="width=device-width, user-scalable=no">
+<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale=1">
 <style>
 body { width: 100%; height: 100%; margin: 0px; padding: 0px; }
 </style>
@@ -11,13 +11,12 @@ body { width: 100%; height: 100%; margin: 0px; padding: 0px; }
 <body>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="/socket.io/socket.io.js"></script>
-<table><tr><td valign="top">
-<canvas id="canvas" width="688" height="427">Sorry, incompatible browser.</canvas>
-</td><td valign="top">
+<canvas style="float:left;" id="canvas" width="688" height="427">Sorry, incompatible browser.</canvas>
+<div style="display:block;">
 <button onclick="clearLog()">Clear Log</button>&nbsp;&nbsp;&nbsp;<input id="touchLog" type="checkbox" /> Touch Log<br>
 <input id="motorLog" type="checkbox" /> Motor Log
 <pre id="log" style="border: 1px solid #ccc;"></pre>
-</td></tr></table>
+</div>
 <script type="text/javascript">
 "use strict";
 var canvas;
@@ -26,8 +25,7 @@ var armId = getIdFromUrl('/');
 var ongoingActions = new Object();
 
 var hotSpots = [];
-var hotSpotsActive = new Array();
-var hotSpotSource = { width:688, height:427 };
+var hotSpotsActive = [];
 var hotSpotRadiusActive = Math.pow(45, 2); // pixel radius squared
 var hotSpotRadiusInactive = Math.pow(40, 2); // pixel radius squared
 var hotSpotRatioX = 1.0;
@@ -49,36 +47,33 @@ hotSpots.push({ x:348, y:322, id:armId+".led1", value:1, active:false });
 
 
 function startup() {
+  ws = io.connect();
+  ws.on('message', function(msg) {
+    alert(msg);
+  });
+
   canvas = document.getElementsByTagName("canvas")[0];
   canvas.addEventListener("touchstart", handleStart, false);
   canvas.addEventListener("touchmove", handleMove, false);
   canvas.addEventListener("touchend", handleEnd, false);
   canvas.addEventListener("touchleave", handleEnd, false);
   canvas.addEventListener("touchcancel", handleCancel, false);
+  window.addEventListener("resize", resizeCanvas, false);
 
   resizeCanvas();
   clearCanvas();
-
-  hotSpotRatioX = canvas.width / hotSpotSource.width;
-  hotSpotRatioY = canvas.height / hotSpotSource.height;
-
-  ws = io.connect();
-  ws.on('message', function(msg) {
-    alert(msg);
-  });
-
-  log("initialized.");
 }
 
 function resizeCanvas() {
-  canvas = document.getElementsByTagName("canvas")[0];
-  var ctx = canvas.getContext("2d");
-  ctx.canvas.width = window.innerWidth;
-  ctx.canvas.height = window.innerHeight;
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  hotSpotRatioX = canvas.width / backdrop.width;
+  hotSpotRatioY = canvas.height / backdrop.height;
+  clearCanvas();
+  log(armId + ": canvas size = " + canvas.width + ", " + canvas.height);
 }
 
 function clearCanvas() {
-  canvas = document.getElementsByTagName("canvas")[0];
   var ctx = canvas.getContext("2d");
   ctx.drawImage(backdrop, 0, 0, canvas.width, canvas.height);
 }
@@ -171,6 +166,7 @@ function handleCancel(evt) {
 function log(msg) {
   var p = document.getElementById('log');
   p.innerHTML = msg + "\n" + p.innerHTML;
+  ws.emit('log', msg);
 }
 
 function getIdFromUrl(id)
