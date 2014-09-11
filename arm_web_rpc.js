@@ -41,6 +41,7 @@ app.use(function(req, res, next) {
 app.use(express.static(path.join(__dirname, wwwPagesDir)));
 
 function arm_page(req, res) {
+    util.log(util.inspect(req.headers, { showHidden: false, depth: 1, colors: false }));
     // page determines the arm id based on the URL, e.g. "/arm1" is arm 1.
     res.sendFile('arm.html', { root: wwwPagesDir });
 }
@@ -50,8 +51,7 @@ function processKeys(ch, key) {
         "key=" + (key? key.name : 'unkn'));
 
     if (key) {
-        // Doesn't use CTL-C because jayson seems to be interfering
-        if (key.name == 'escape') {
+        if ((key.ctrl && key.name == 'c') || key.name == 'escape' ) {
             stopAllMotors();
             process.exit();
         }

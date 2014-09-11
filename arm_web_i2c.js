@@ -39,6 +39,7 @@ app.use(function(req, res, next) {
 app.use(express.static(path.join(__dirname, wwwPagesDir)));
 
 function arm_page(req, res) {
+    util.log(util.inspect(req.headers, { showHidden: false, depth: 1, colors: false }));
     // page determines the arm id based on the URL, e.g. "/arm1" is arm 1.
     res.sendFile('arm.html', { root: wwwPagesDir });
 }
@@ -48,12 +49,11 @@ function processKeys(ch, key) {
         "key=" + (key? key.name : 'unkn'));
 
     if (key) {
-        if (key.ctrl && key.name == 'c') {
+        if ((key.ctrl && key.name == 'c') || key.name == 'escape' ) {
             arm1.reset();
             arm2.reset();
-            process.stdin.pause();
-        } else if (key.name == 'escape') {
-            stopAllMotors();
+            //process.stdin.pause();
+            //stopAllMotors();
             process.exit();
         }
     }
