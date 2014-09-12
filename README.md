@@ -17,4 +17,4 @@ License
 
 Copyright (C) 2014 Kevin Ambruster, Anthony Barresi, Brendan Gaylord-Miles, Warren Macchi
 
-See [License.md](License.md)
+See [License file](License)
