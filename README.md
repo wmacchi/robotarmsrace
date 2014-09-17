@@ -14,13 +14,12 @@ This project was built using the following technologies:
 * [MCP23017 I2C 16-Bit IO Expander](http://www.microchip.com/wwwproducts/Devices.aspx?product=MCP23017)
 * L9110S H-bridge DC Motor Driver Controllers
 * DC adjustable voltage regulators (to adjust power to the H-bridge drivers)
-
 * [Node.js](http://nodejs.org/)
-* [Node.js express](http://expressjs.com/)
-* [Node.js jayson](https://github.com/tedeh/jayson/)
-* [Node.js keypress](https://github.com/TooTallNate/keypress/)
-* [Node.js socket.io](http://socket.io/)
-* [Node.js i2c](https://github.com/kelly/node-i2c/)
+  * [express](http://expressjs.com/)
+  * [jayson](https://github.com/tedeh/jayson/)
+  * [keypress](https://github.com/TooTallNate/keypress/)
+  * [socket.io](http://socket.io/)
+  * [i2c](https://github.com/kelly/node-i2c/)
 * [jQuery](http://jquery.com/)
 * [WebSockets, through socket.io](http://dev.w3.org/html5/websockets/)
 * [I2C](http://en.wikipedia.org/wiki/I%C2%B2C)
