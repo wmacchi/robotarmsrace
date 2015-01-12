@@ -1,7 +1,7 @@
 robotarmsrace
 =============
 
-Robot Arms Race Project for the [Orlando Maker Faire](http://www.makerfaireorlando.com) on September 13-14, 2014.
+Robot Arms Race Project for the [Orlando Maker Faire](http://www.makerfaireorlando.com) on September 13-14, 2014. [Additional Pictures and Videos](https://pogoplug.com/s/B4u5_63lap4/).
 
 
 Technology Components
